@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>嘉楠的 AI 分身</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #f4f7fb, #e8eef7);
+            color: #222;
+        }
+
+        .page {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 860px;
+            height: 88vh;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 22px 28px;
+            border-bottom: 1px solid #edf0f5;
+            background: #ffffff;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #667085;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: #fafbfc;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 18px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .bubble {
+            max-width: 78%;
+            padding: 14px 16px;
+            border-radius: 18px;
+            line-height: 1.7;
+            font-size: 15px;
+            white-space: pre-wrap;
+        }
+
+        .user .bubble {
+            background: #2563eb;
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .bot .bubble {
+            background: white;
+            color: #222;
+            border: 1px solid #edf0f5;
+            border-bottom-left-radius: 6px;
+        }
+
+        .input-area {
+            padding: 18px;
+            border-top: 1px solid #edf0f5;
+            background: white;
+            display: flex;
+            gap: 12px;
+        }
+
+        textarea {
+            flex: 1;
+            resize: none;
+            height: 52px;
+            border: 1px solid #d0d5dd;
+            border-radius: 16px;
+            padding: 14px 16px;
+            font-size: 15px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            border-color: #2563eb;
+        }
+
+        button {
+            width: 96px;
+            border: none;
+            border-radius: 16px;
+            background: #2563eb;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .tips {
+            font-size: 12px;
+            color: #98a2b3;
+            padding: 0 22px 16px;
+            background: white;
+        }
+
+        @media (max-width: 600px) {
+            .page {
+                padding: 0;
+            }
+
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .bubble {
+                max-width: 88%;
+            }
+
+            .title {
+                font-size: 21px;
+            }
+
+            button {
+                width: 76px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="chat-container">
+            <div class="header">
+                <h1 class="title">嘉楠的 AI 分身</h1>
+                <div class="subtitle">
+                    这是一个基于人物资料和表达样本构建的 AI 分身。它会尽量模仿嘉楠的思考方式和说话风格，但不代表本人真实发言。
+                </div>
+            </div>
+
+            <div class="chat-box" id="chatBox">
+                <div class="message bot">
+                    <div class="bubble">
+你好，我是基于嘉楠的人物资料和表达样本构建的 AI 分身。你可以和我聊天，也可以问我怎么看某个问题。
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <textarea id="userInput" placeholder="输入你想说的话，按 Enter 发送，Shift + Enter 换行"></textarea>
+                <button id="sendBtn" onclick="sendMessage()">发送</button>
+            </div>
+            <div class="tips">
+                提醒：这是 AI 模拟，不是真人本人。请不要用于身份确认、借钱、隐私承诺等场景。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById("chatBox");
+        const userInput = document.getElementById("userInput");
+        const sendBtn = document.getElementById("sendBtn");
+
+        function addMessage(role, text) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "message " + role;
+
+            const bubbleDiv = document.createElement("div");
+            bubbleDiv.className = "bubble";
+            bubbleDiv.innerText = text;
+
+            messageDiv.appendChild(bubbleDiv);
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+
+            if (!message) {
+                return;
+            }
+
+            addMessage("user", message);
+            userInput.value = "";
+            sendBtn.disabled = true;
+            sendBtn.innerText = "等待";
+
+            addMessage("bot", "我想一下……");
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+
+                const lastBotBubble = chatBox.querySelector(".message.bot:last-child .bubble");
+                lastBotBubble.innerText = data.answer || "没有收到有效回复。";
+            } catch (error) {
+                const lastBotBubble = chatBox.querySelector(".message.bot:last-child .bubble");
+                lastBotBubble.innerText = "出错了，可能是服务没有启动，或者 API 调用失败。";
+            }
+
+            sendBtn.disabled = false;
+            sendBtn.innerText = "发送";
+        }
+
+        userInput.addEventListener("keydown", function(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
